@@ -60,6 +60,8 @@ def edit_product(id):
     conn.close()
     return render_template('edit_product.html', product=product)
 
+# Je vais a l'ecole
+
 # Supprimer un produit
 @app.route('/delete_product/<int:id>', methods=['POST'])
 def delete_product(id):
