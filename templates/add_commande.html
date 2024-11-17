@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Ajouter une commande{% endblock %}
+{% block content %}
+    <h1>Ajouter une nouvelle commande</h1>
+    <form method="POST">
+        <label for="client_id">ID du client :</label>
+        <input type="number" id="client_id" name="client_id" required>
+        
+        <label for="produit_id">ID du produit :</label>
+        <input type="number" id="produit_id" name="produit_id" required>
+        
+        <label for="quantite">Quantité :</label>
+        <input type="number" id="quantite" name="quantite" required>
+        
+        <button type="submit">Ajouter la commande</button>
+    </form>
+    <a href="{{ url_for('commandes') }}">Retour à la liste des commandes</a>
+{% endblock %}

@@ -1,38 +1,12 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un produit</title>
-    <link rel="stylesheet" href="/Static/style.css">
-</head>
-<body>
-    <div class="form-container">
-        <h1>Ajouter un produit</h1>
-        <form action="/add_product" method="POST">
-            <div class="section">
-                <label for="nom">Nom du produit</label>
-                <input type="text" id="nom" name="nom" required>
-            </div>
-
-            <div class="section">
-                <label for="prix">Prix</label>
-                <input type="number" step="0.01" id="prix" name="prix" required>
-            </div>
-
-            <div class="section">
-                <label for="description">Description</label>
-                <textarea id="description" name="description"></textarea>
-            </div>
-
-            <div class="section">
-                <label for="stock">Stock</label>
-                <input type="number" id="stock" name="stock" required>
-            </div>
-
-            <button type="submit">Ajouter le produit</button>
-        </form>
-        <a href="products.html">Retour à la liste des produits</a>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Ajouter un produit{% endblock %}
+{% block content %}
+    <h1>Ajouter un produit</h1>
+    <form method="POST">
+        <input type="text" name="nom" placeholder="Nom du produit" required>
+        <input type="number" name="prix" step="0.01" placeholder="Prix" required>
+        <textarea name="description" placeholder="Description"></textarea>
+        <input type="number" name="stock" placeholder="Stock" required>
+        <button type="submit">Ajouter</button>
+    </form>
+{% endblock %}

@@ -1,39 +1,29 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Liste des produits</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Produits{% endblock %}
+{% block content %}
     <h1>Liste des produits</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Prix</th>
-                <th>Description</th>
-                <th>Stock</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td>{{ product.nom }}</td>
-                <td>{{ product.prix }}</td>
-                <td>{{ product.description }}</td>
-                <td>{{ product.stock }}</td>
-                <td>
-                    <a href="{{ url_for('edit_product', id=product.id) }}">Modifier</a>
-                    <form action="{{ url_for('delete_product', id=product.id) }}" method="POST" style="display:inline;">
-                        <button type="submit">Supprimer</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+    <a href="{{ url_for('add_product') }}">Ajouter un produit</a> <!-- Lien pour ajouter un produit -->
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Prix</th>
+            <th>Description</th>
+            <th>Stock</th>
+            <th>Actions</th>
+        </tr>
+        {% for product in products %}
+        <tr>
+            <td>{{ product[0] }}</td> <!-- Assurez-vous que product[0] est un entier -->
+            <td>{{ product[1] }}</td>
+            <td>{{ product[2] }}</td>
+            <td>{{ product[3] }}</td>
+            <td>{{ product[4] }}</td>
+            <td>
+                <a href="{{ url_for('edit_product', product_id=product[0]) }}">Modifier</a> <!-- Vérifiez que product[0] est un entier -->
+                <a href="{{ url_for('delete_product', product_id=product[0]) }}" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?');">Supprimer</a>
+            </td>
+        </tr>
+        {% endfor %}
     </table>
-    <a href="index.html">Retour à l'accueil</a>
-</body>
-</html>
+{% endblock %}

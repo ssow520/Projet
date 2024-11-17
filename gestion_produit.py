@@ -37,6 +37,7 @@ def handle_errors(func):
             print(f"Erreur lors de l'exécution de {func.__name__}: {e}")
     return wrapper  # Retourne la fonction wrapper qui va être utilisée pour le décorateur
 
+
 # Classe Produit pour manipuler les produits dans la base de données
 class Produit:
     def __init__(self, nom="", prix=0.0, description="", stock=0):
@@ -44,7 +45,7 @@ class Produit:
         self.prix = prix # Attribue le prix du produit
         self.description = description # Attribue la description du produit
         self.stock = stock # Attribue la quantité en stock du produit
-        #self.create_table() # Crée la table des produits si elle n'existe pas déjà
+        self.create_table() # Crée la table des produits si elle n'existe pas déjà
 
     def create_table(self):
         """ Crée la table Produits si elle n'existe pas déjà """
@@ -169,7 +170,7 @@ class Client:
         self.nom = nom
         self.email = email
         self.adresse = adresse
-        #self.create_table()
+        self.create_table()
 
     def create_table(self):
         """ Crée la table Clients si elle n'existe pas déjà """

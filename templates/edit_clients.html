@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Modifier un client{% endblock %}
+{% block content %}
+    <h1>Modifier un client</h1>
+    <form method="POST">
+        <input type="text" name="nom" value="{{ client[1] }}" placeholder="Nom" required>
+        <input type="email" name="email" value="{{ client[2] }}" placeholder="Email" required>
+        <input type="text" name="adresse" value="{{ client[3] }}" placeholder="Adresse" required>
+        <button type="submit">Modifier</button>
+    </form>
+    <a href="{{ url_for('clients') }}">Retour à la liste des clients</a>
+{% endblock %}
