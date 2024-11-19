@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier la commande</title>
+</head>
+<body>
+    <h2>Modifier la Commande</h2>
+    <form method="POST">
+        <label for="client_id">Client</label>
+        <select name="client_id" id="client_id" required>
+            {% for client in clients %}
+                <option value="{{ client.id }}" {% if client.id == order.client.id %}selected{% endif %}>{{ client.nom }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="produit_id">Produit</label>
+        <select name="produit_id" id="produit_id" required>
+            {% for product in products %}
+                <option value="{{ product.id }}" {% if product.id == order.produit.id %}selected{% endif %}>{{ product.nom }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="quantite">Quantité</label>
+        <input type="number" name="quantite" id="quantite" value="{{ order.quantite }}" required><br>
+
+        <button type="submit">Mettre à jour</button>
+    </form>
+</body>
+</html>

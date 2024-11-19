@@ -1,220 +1,277 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from flask_bcrypt import Bcrypt
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import InputRequired, Length, ValidationError
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from flask_sqlalchemy import SQLAlchemy
 import sqlite3
 from datetime import datetime
+from gestion_produit import Produit, Commande, Client
 
-# Initialisation de l'application Flask
+
 app = Flask(__name__)
-app.secret_key = 'votre_clé_secrète_ici'  # Nécessaire pour les sessions et les messages flash
 
-# Importation des classes existantes
-# Assurez-vous que ces classes sont dans le même dossier que ce fichier
-from gestion_produit import Produit, Client, Commande
+# Define the base directory and set up the database URI
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app_database.db'
+app.config['SECRET_KEY'] = 'your_secret_key'
 
-# Fonction pour créer la table des utilisateurs
-def create_users_table():
-    with sqlite3.connect("app_database.db") as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            password TEXT NOT NULL
-        )
-        ''')
-        conn.commit()
+db = SQLAlchemy(app)
 
-             # Ajoutez un utilisateur de test si la table est vide
-        cursor.execute("SELECT COUNT(*) FROM users")
-        if cursor.fetchone()[0] == 0:
-            hashed_password = generate_password_hash('1234')
-            cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('ssow', hashed_password))
+bcrypt = Bcrypt(app)
 
-# Appel de la fonction pour créer la table des utilisateurs
-create_users_table()
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
-# Décorateur pour vérifier si l'utilisateur est connecté
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('Vous devez être connecté pour accéder à cette page.', 'error')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-# Route pour la page d'accueil
-@app.route('/')
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(80), nullable=False)
+
+
+@app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
-def index():
-    return render_template('index.html')
+def dashboard():
+    return render_template('dashboard.html')
 
-# Route pour la page de connexion
+@app.route('/')
+def index():
+    return render_template('index.html', user=current_user)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        with sqlite3.connect("app_database.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-            user = cursor.fetchone()
-            if user and check_password_hash(user[2], password):
-                session['user_id'] = user[0]
-                flash('Connexion réussie!', 'success')
-                return redirect(url_for('index'))
-            else:
-                flash('Nom d\'utilisateur ou mot de passe incorrect.', 'error')
-    return render_template('login.html')
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user:
+            if bcrypt.check_password_hash(user.password, form.password.data):
+                login_user(user)
+                return redirect(url_for('dashboard'))
+    return render_template('login.html', form=form)
 
-# Route pour la déconnexion
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
 def logout():
-    session.pop('user_id', None)
-    flash('Vous avez été déconnecté.', 'info')
+    logout_user()
     return redirect(url_for('login'))
 
-# Route pour la gestion des produits
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data)
+        new_user = User(username=form.username.data, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+    return render_template('register.html', form=form)
+
+
+class RegisterForm(FlaskForm):
+    username = StringField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Username"})
+    password = PasswordField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Password"})
+    submit = SubmitField("Register")
+
+    def validate_username(self, username):
+        existing_user_username = User.query.filter_by(
+            username=username.data).first()
+        if existing_user_username:
+            raise ValidationError(
+                "That username already exists. Please choose a different one")
+        
+
+class LoginForm(FlaskForm):
+    username = StringField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Username"})
+
+    password = PasswordField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Password"})
+    submit = SubmitField("Login")
+
+# Route pour afficher les produits
 @app.route('/products')
-@login_required
 def products():
-    produit = Produit()
-    products_list = produit.read()
-    return render_template('products.html', products=products_list)
+    """
+    Affiche la liste des produits. Accessible uniquement pour les utilisateurs connectés.
+    """
+    products_list = Produit.get_all()  # Récupère tous les produits de la base de données
+    return render_template('products.html', products=products_list)  # Affiche la page des produits
 
 # Route pour ajouter un produit
 @app.route('/add_product', methods=['GET', 'POST'])
-@login_required
 def add_product():
+    """
+    Permet à un utilisateur connecté d'ajouter un nouveau produit.
+    """
     if request.method == 'POST':
         nom = request.form['nom']
         prix = float(request.form['prix'])
         description = request.form['description']
         stock = int(request.form['stock'])
-        produit = Produit(nom, prix, description, stock)
-        produit.add()
+        type_produit = request.form['type']
+        Produit.create(nom, prix, description, stock, type_produit)  # Création du produit dans la base de données
         flash('Produit ajouté avec succès!', 'success')
-        return redirect(url_for('products'))
-    return render_template('add_product.html')
+        return redirect(url_for('products'))  # Redirige vers la liste des produits après l'ajout
+    
+    return render_template('add_product.html')  # Affiche le formulaire d'ajout de produit
 
 # Route pour modifier un produit
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
-@login_required
 def edit_product(product_id):
-    produit = Produit()
+    """
+    Permet de modifier un produit existant.
+    """
+    product = Produit.get_by_id(product_id)  # Récupère les détails du produit à modifier
     if request.method == 'POST':
         nom = request.form['nom']
         prix = float(request.form['prix'])
         description = request.form['description']
         stock = int(request.form['stock'])
-        produit.update(product_id, nom, prix, description, stock)
+        type_produit = request.form['type']
+        Produit.update(product_id, nom, prix, description, stock, type_produit)  # Mise à jour du produit
         flash('Produit mis à jour avec succès!', 'success')
-        return redirect(url_for('products'))
-    product = produit.read(product_id)
-    return render_template('edit_product.html', product=product)
+        return redirect(url_for('products'))  # Redirige vers la liste des produits
+    
+    return render_template('edit_product.html', product=product)  # Affiche le formulaire d'édition du produit
 
 # Route pour supprimer un produit
 @app.route('/delete_product/<int:product_id>')
-@login_required
 def delete_product(product_id):
-    produit = Produit()
-    produit.delete(product_id)
+    """
+    Permet de supprimer un produit existant.
+    """
+    Produit.delete(product_id)  # Suppression du produit
     flash('Produit supprimé avec succès!', 'success')
-    return redirect(url_for('products'))
+    return redirect(url_for('products'))  # Redirige vers la liste des produits
 
-# Route pour la gestion des clients
+# Route pour supprimer tous les produits
+@app.route('/delete_all_products')
+def delete_all_products():
+    """
+    Permet de supprimer tous les produits existants.
+    """
+    Produit.delete_all()  # Suppression de tous les produits
+    flash('Tous les produits supprimés avec succès!', 'success')
+    return redirect(url_for('products'))  # Redirige vers la liste des produits
+
+# Route pour afficher les clients
 @app.route('/clients')
-@login_required
 def clients():
-    client = Client()
-    clients_list = client.read()
-    return render_template('clients.html', clients=clients_list)
+    """
+    Affiche la liste des clients. Accessible uniquement pour les utilisateurs connectés.
+    """
+    clients_list = Client.get_all()  # Récupère tous les clients de la base de données
+    return render_template('clients.html', clients=clients_list)  # Affiche la page des clients
 
 # Route pour ajouter un client
 @app.route('/add_client', methods=['GET', 'POST'])
-@login_required
 def add_client():
     if request.method == 'POST':
         nom = request.form['nom']
         email = request.form['email']
         adresse = request.form['adresse']
-        client = Client(nom, email, adresse)
-        client.add()
+        Client.create(nom, email, adresse)
         flash('Client ajouté avec succès!', 'success')
         return redirect(url_for('clients'))
     return render_template('add_client.html')
 
 # Route pour modifier un client
 @app.route('/edit_client/<int:client_id>', methods=['GET', 'POST'])
-@login_required
 def edit_client(client_id):
-    client = Client()
+    client = Client.get_by_id(client_id)
     if request.method == 'POST':
         nom = request.form['nom']
         email = request.form['email']
         adresse = request.form['adresse']
-        client.update(client_id, nom, email, adresse)
+        Client.update(client_id, nom, email, adresse)
         flash('Client mis à jour avec succès!', 'success')
         return redirect(url_for('clients'))
-    client_data = client.read(client_id)
-    return render_template('edit_clients.html', client=client_data)
+    return render_template('edit_client.html', client=client)
 
 # Route pour supprimer un client
 @app.route('/delete_client/<int:client_id>')
-@login_required
 def delete_client(client_id):
-    client = Client()
-    client.delete(client_id)
+    Client.delete(client_id)
     flash('Client supprimé avec succès!', 'success')
     return redirect(url_for('clients'))
 
-# Route pour la gestion des commandes
-@app.route('/commandes')
-@login_required
-def commandes():
-    commande = Commande()
-    commandes_list = commande.read()
-    return render_template('commandes.html', commandes=commandes_list)
+# Route pour supprimer tous les clients
+@app.route('/delete_all_clients')
+def delete_all_clients():
+    """
+    Permet de supprimer tous les clients existants.
+    """
+    Client.delete_all()  # Suppression de tous les clients
+    flash('Tous les clients supprimés avec succès!', 'success')
+    return redirect(url_for('clients'))  # Redirige vers la liste des clients
+
+# Route pour afficher les commandes
+@app.route('/orders')
+def orders():
+    orders_list = Commande.get_all()
+    return render_template('orders.html', orders=orders_list)
 
 # Route pour ajouter une commande
-@app.route('/add_commande', methods=['GET', 'POST'])
-@login_required
-def add_commande():
+@app.route('/add_order', methods=['GET', 'POST'])
+def add_order():
     if request.method == 'POST':
         client_id = int(request.form['client_id'])
         produit_id = int(request.form['produit_id'])
         quantite = int(request.form['quantite'])
-        commande = Commande(client_id, produit_id, quantite)
-        commande.add()
+        Commande.create(client_id, produit_id, quantite)
         flash('Commande ajoutée avec succès!', 'success')
-        return redirect(url_for('commandes'))
-    return render_template('add_commande.html')
+        return redirect(url_for('orders'))
+    clients_list = Client.get_all()
+    products_list = Produit.get_all()
+    return render_template('add_order.html', products=products_list, clients=clients_list)
 
 # Route pour modifier une commande
-@app.route('/edit_commande/<int:commande_id>', methods=['GET', 'POST'])
-@login_required
-def edit_commande(commande_id):
-    commande = Commande()
+@app.route('/edit_order/<int:order_id>', methods=['GET', 'POST'])
+def edit_order(order_id):
+    order = Commande.get_by_id(order_id)
     if request.method == 'POST':
         client_id = int(request.form['client_id'])
         produit_id = int(request.form['produit_id'])
         quantite = int(request.form['quantite'])
-        commande.update(commande_id, client_id, produit_id, quantite)
+        Commande.update(order_id, client_id, produit_id, quantite)
         flash('Commande mise à jour avec succès!', 'success')
-        return redirect(url_for('commandes'))
-    commande_data = commande.read(commande_id)
-    return render_template('edit_commande.html', commande=commande_data)
+        return redirect(url_for('orders'))
+    clients_list = Client.get_all()
+    products_list = Produit.get_all()
+    return render_template('edit_order.html', order=order, products=products_list, clients=clients_list)
 
 # Route pour supprimer une commande
-@app.route('/delete_commande/<int:commande_id>')
-@login_required
-def delete_commande(commande_id):
-    commande = Commande()
-    commande.delete(commande_id)
-    flash('Commande supprimée avec succès!', 'success')
-    return redirect(url_for('commandes'))
+@app.route('/delete_order/<int:order_id>')
+def delete_order(order_id):    
+    Commande.delete(order_id)    
+    flash('Commande supprimée avec succès!', 'success')    
+    return redirect(url_for('orders'))    
 
-# Lancement de l'application
+# Route pour supprimer toutes les commandes
+@app.route('/delete_all_orders')
+def delete_all_orders():
+    """
+    Permet de supprimer toutes les commandes existantes.
+    """
+    Commande.delete_all()  # Suppression de toutes les commandes
+    flash('Toutes les commandes supprimées avec succès!', 'success')
+    return redirect(url_for('orders'))  # Redirige vers la liste des commandes   
+
 if __name__ == '__main__':
+
+    # Initialize the database by pushing the app context
+    app.app_context().push()
+    db.create_all()
+
     app.run(debug=True)

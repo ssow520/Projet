@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <nav>
+        <ul class="nav-list">
+            <li><a href="{{ url_for('products') }}">Voir les produits</a></li>
+            <li><a href="{{ url_for('clients') }}">Voir les clients</a></li>
+            <li><a href="{{ url_for('orders') }}">Voir les commandes</a></li>
+            <li><a href="{{ url_for('logout') }}">Se déconnecter</a></li>
+        </ul>
+    </nav>
+    <h1>Hello you are logged in</h1>
+</body>
+</html>
