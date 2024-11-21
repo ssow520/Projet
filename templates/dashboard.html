@@ -4,16 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Style global (fond et typographie) */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #6a11cb, #2575fc); /* Dégradé violet et bleu */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .nav-list li {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-list li a {
+            text-decoration: none;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-list li a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: #000;
+            transform: translateY(-2px);
+        }
+
+        /* Contenu principal */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .content-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+        }
+
+        .content-box h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #fff9e3; /* Contraste chaud */
+            text-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .content-box p {
+            font-size: 1.2rem;
+        }
+
+        /* Pied de page */
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background: rgba(0, 0, 0, 0.4);
+            color: #ffffff;
+            font-size: 0.9rem;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
 </head>
 <body>
     <nav>
         <ul class="nav-list">
-            <li><a href="{{ url_for('products') }}">Voir les produits</a></li>
-            <li><a href="{{ url_for('clients') }}">Voir les clients</a></li>
-            <li><a href="{{ url_for('orders') }}">Voir les commandes</a></li>
-            <li><a href="{{ url_for('logout') }}">Se déconnecter</a></li>
+            <li><a href="{{ url_for('produits') }}"><i class="fas fa-box"></i> Produits</a></li>
+            <li><a href="{{ url_for('list_clients') }}"><i class="fas fa-user"></i> Clients</a></li>
+            <li><a href="{{ url_for('liste_commandes') }}"><i class="fas fa-shopping-cart"></i> Commandes</a></li>
+            <li><a href="{{ url_for('graph') }}"><i class="fas fa-chart-bar"></i> Graphiques</a></li>
+            <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Se déconnecter</a></li>
         </ul>
     </nav>
-    <h1>Hello you are logged in</h1>
+    
+    <main>
+        <div class="content-box">
+            <h1><i class="fas fa-tachometer-alt"></i> Bienvenue sur le Tableau de Bord</h1>
+            <p>Utilisez le menu de navigation pour explorer les fonctionnalités de l'application.</p>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2024 Mon Application - Tous droits réservés.
+    </footer>
 </body>
 </html>

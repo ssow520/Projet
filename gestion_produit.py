@@ -1,396 +1,204 @@
-import sqlite3  # Module pour interagir avec la base de données SQLite
-from werkzeug.security import check_password_hash  # Module pour la gestion des mots de passe sécurisés
+import sqlite3
+from flask_sqlalchemy import SQLAlchemy
 
-# Constantes définissant les noms des tables
-TABLE_PRODUIT = "produits"  # Nom de la table contenant les informations des produits
-TABLE_CLIENT = "clients"  # Nom de la table contenant les informations des clients
-TABLE_COMMANDE = "commandes"  # Nom de la table contenant les informations des commandes
+# Initialisation de SQLAlchemy
+db = SQLAlchemy()
 
+# Définition du modèle Produit
+class Produit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)  # ID du produit, clé primaire
+    nom = db.Column(db.String(50), nullable=False)  # Nom du produit
+    prix = db.Column(db.Float, nullable=False)  # Prix du produit
+    description = db.Column(db.Text, nullable=True)  # Description du produit
+    stock = db.Column(db.Integer, nullable=False)  # Stock disponible
+    type_produit = db.Column(db.String(100), nullable=False)  # Type de produit (par exemple, fruits, légumes)
+
+    # Méthode pour afficher l'objet de manière lisible
+    def __repr__(self):
+        return f'<Produit {self.nom}>'
+    
 class Produit:
-    """
-    Classe pour gérer les produits dans une base de données SQLite.
-    Permet de créer la table, ajouter, lire, mettre à jour et supprimer des produits.
-    """
-
     def __init__(self, nom="", prix=0.0, description="", stock=0, type_produit=""):
-        """
-        Initialise un objet Produit avec les attributs nécessaires.
-
-        :param nom: Nom du produit (par défaut, chaîne vide).
-        :param prix: Prix du produit (par défaut, 0.0).
-        :param description: Description du produit (par défaut, chaîne vide).
-        :param stock: Quantité en stock (par défaut, 0).
-        :param type_produit: Catégorie ou type du produit (par défaut, chaîne vide).
-        """
         self.nom = nom
         self.prix = prix
         self.description = description
         self.stock = stock
         self.type_produit = type_produit
 
-    def create_table(self):
-        """
-        Crée la table `produits` dans la base de données si elle n'existe pas déjà.
-        La table contient les colonnes : id, nom, prix, description, stock et type_produit.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:  # Connexion à la base de données
-                cursor = conn.cursor()  # Création d'un curseur pour exécuter des commandes SQL
-                cursor.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {TABLE_PRODUIT} (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        nom TEXT NOT NULL,                   
-                        prix REAL NOT NULL,                
-                        description TEXT,                
-                        stock INTEGER NOT NULL,             
-                        type_produit TEXT NOT NULL           
-                    );
-                """)
-                conn.commit()  # Validation des modifications
-        except sqlite3.Error as e:
-            print(f"Erreur lors de la création de la table : {e}")
+    # Créer la base de données et la table si elles n'existent pas
+    def create_table_product(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS produits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nom TEXT NOT NULL,
+                    prix REAL NOT NULL,
+                    description TEXT NOT NULL,
+                    stock INTEGER NOT NULL,
+                    type_produit TEXT NOT NULL
+                )
+            """)
+            connection.commit()
 
-    def add(self):
-        """
-        Ajoute un produit dans la table `produits`.
+    # Ajouter un nouveau produit à la base de données
+    def add_product(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                INSERT INTO produits (nom, prix, description, stock, type_produit)
+                VALUES (?, ?, ?, ?, ?)
+            """, (self.nom, self.prix, self.description, self.stock, self.type_produit))
+            connection.commit()
 
-        :return: Un dictionnaire contenant les détails du produit ajouté ou un message d'erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(f"""
-                    INSERT INTO {TABLE_PRODUIT} (nom, prix, description, stock, type_produit)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (self.nom, self.prix, self.description, self.stock, self.type_produit))
-                conn.commit()
-                product_id = cursor.lastrowid  # Récupération de l'ID généré pour le produit
-                return {
-                    "id": product_id,
-                    "nom": self.nom,
-                    "prix": self.prix,
-                    "description": self.description,
-                    "stock": self.stock,
-                    "type_produit": self.type_produit
-                }
-        except sqlite3.Error as e:
-            return {"error": str(e)}
+    # Récupérer tous les produits de la base de données
+    def get_products(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT * FROM produits")
+            produits = cursor.fetchall()
+            return produits
 
-    def read(self, product_id=None):
-        """
-        Lit les informations d'un produit spécifique ou de tous les produits.
+    # Mettre à jour un produit existant dans la base de données
+    def update_product(self, product_id):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                UPDATE produits
+                SET nom = ?, prix = ?, description = ?, stock = ?, type_produit = ?
+                WHERE id = ?
+            """, (self.nom, self.prix, self.description, self.stock, self.type_produit, product_id))
+            connection.commit()
 
-        :param product_id: ID du produit à lire. Si None, tous les produits sont retournés.
-        :return: Une liste de produits ou un dictionnaire contenant un message d'erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                if product_id:
-                    cursor.execute(f"SELECT * FROM {TABLE_PRODUIT} WHERE id = ?", (product_id,))
-                    return cursor.fetchone()  # Récupère un seul produit
-                else:
-                    cursor.execute(f"SELECT * FROM {TABLE_PRODUIT}")
-                    return cursor.fetchall()  # Récupère tous les produits
-        except sqlite3.Error as e:
-            return {"error": str(e)}
+    # Supprimer un produit de la base de données
+    def delete_product(self, product_id):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("DELETE FROM produits WHERE id = ?", (product_id,))
+            connection.commit()
 
-    def update(self, product_id, **kwargs):
-        """
-        Met à jour les informations d'un produit en fonction des champs fournis.
-
-        :param product_id: ID du produit à mettre à jour.
-        :param kwargs: Dictionnaire contenant les champs à mettre à jour et leurs nouvelles valeurs.
-        :return: Un message indiquant le succès ou une erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                update_fields = []
-                values = []
-                for field, value in kwargs.items():
-                    if value is not None:
-                        update_fields.append(f"{field} = ?")
-                        values.append(value)
-                if not update_fields:
-                    return {"message": "Aucune modification à apporter."}
-                values.append(product_id)  # Ajoute l'ID à la fin des valeurs
-                query = f"UPDATE {TABLE_PRODUIT} SET {', '.join(update_fields)} WHERE id = ?"
-                cursor.execute(query, values)
-                conn.commit()
-                return {"message": "Produit mis à jour avec succès."}
-        except sqlite3.Error as e:
-            return {"error": str(e)}
-
-    def delete(self, product_id):
-        """
-        Supprime un produit de la table `produits` en fonction de son ID.
-
-        :param product_id: ID du produit à supprimer.
-        :return: Un message indiquant le succès ou une erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(f"DELETE FROM {TABLE_PRODUIT} WHERE id = ?", (product_id,))
-                conn.commit()
-                return {"message": "Produit supprimé avec succès."}
-        except sqlite3.Error as e:
-            return {"error": str(e)}
-        
-Produit().create_table()
+# Créer les tables
+produit = Produit()
+produit.create_table_product()
 
 
 class Client:
-    """
-    Classe pour gérer les clients dans une base de données SQLite.
-    Permet de créer la table, ajouter, lire, mettre à jour et supprimer des clients.
-    """
-
     def __init__(self, nom="", email="", adresse=""):
-        """
-        Initialise un objet Client avec les attributs nécessaires.
-
-        :param nom: Nom du client (par défaut, chaîne vide).
-        :param email: Email du client (par défaut, chaîne vide).
-        :param adresse: Adresse du client (par défaut, chaîne vide).
-        """
         self.nom = nom
         self.email = email
         self.adresse = adresse
 
-    def create_table(self):
-        """
-        Crée la table `clients` dans la base de données si elle n'existe pas déjà.
-        La table contient les colonnes : id, nom, email et adresse.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:  # Connexion à la base de données
-                cursor = conn.cursor()  # Création d'un curseur pour exécuter des commandes SQL
-                cursor.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {TABLE_CLIENT} (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,  -- Identifiant unique pour chaque client
-                        nom TEXT NOT NULL,                     -- Nom du client
-                        email TEXT NOT NULL UNIQUE,            -- Email unique
-                        adresse TEXT NOT NULL                  -- Adresse du client
-                    );
-                """)
-                conn.commit()  # Validation des modifications
-        except sqlite3.Error as e:
-            print(f"Erreur lors de la création de la table : {e}")
+    # Create the database and table if they don't exist
+    def create_table_client(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS clients (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nom TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    adresse TEXT NOT NULL
+                )
+            """)
+            connection.commit()
 
-    def add(self):
-        """
-        Ajoute un client dans la table `clients`.
+    # Add a new client to the database
+    def add_client(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                INSERT INTO clients (nom, email, adresse)
+                VALUES (?, ?, ?)
+            """, (self.nom, self.email, self.adresse))
+            connection.commit()
 
-        :return: Un dictionnaire contenant les détails du client ajouté ou un message d'erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(f"""
-                    INSERT INTO {TABLE_CLIENT} (nom, email, adresse)
-                    VALUES (?, ?, ?)
-                """, (self.nom, self.email, self.adresse))
-                conn.commit()
-                client_id = cursor.lastrowid  # Récupération de l'ID généré pour le client
-                return {
-                    "id": client_id,
-                    "nom": self.nom,
-                    "email": self.email,
-                    "adresse": self.adresse
-                }
-        except sqlite3.Error as e:
-            return {"error": str(e)}
+    # Retrieve all clients from the database
+    def get_clients(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT * FROM clients")
+            clients = cursor.fetchall()
+            return clients
 
-    def read(self, client_id=None):
-        """
-        Lit les informations d'un client spécifique ou de tous les clients.
+    # Update an existing client in the database
+    def update_client(self, client_id):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                UPDATE clients
+                SET nom = ?, email = ?, adresse = ?
+                WHERE id = ?
+            """, (self.nom, self.email, self.adresse, client_id))
+            connection.commit()
 
-        :param client_id: ID du client à lire. Si None, tous les clients sont retournés.
-        :return: Une liste de clients ou un dictionnaire contenant un message d'erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                if client_id:
-                    cursor.execute(f"SELECT * FROM {TABLE_CLIENT} WHERE id = ?", (client_id,))
-                    return cursor.fetchone()  # Récupère un seul client
-                else:
-                    cursor.execute(f"SELECT * FROM {TABLE_CLIENT}")
-                    return cursor.fetchall()  # Récupère tous les clients
-        except sqlite3.Error as e:
-            return {"error": str(e)}
+    # Delete a client from the database
+    def delete_client(self, client_id):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("DELETE FROM clients WHERE id = ?", (client_id,))
+            connection.commit()
 
-    def update(self, client_id, **kwargs):
-        """
-        Met à jour les informations d'un client en fonction des champs fournis.
-
-        :param client_id: ID du client à mettre à jour.
-        :param kwargs: Dictionnaire contenant les champs à mettre à jour et leurs nouvelles valeurs.
-        :return: Un message indiquant le succès ou une erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                update_fields = []
-                values = []
-                for field, value in kwargs.items():
-                    if value is not None:
-                        update_fields.append(f"{field} = ?")
-                        values.append(value)
-                if not update_fields:
-                    return {"message": "Aucune modification à apporter."}
-                values.append(client_id)  # Ajoute l'ID à la fin des valeurs
-                query = f"UPDATE {TABLE_CLIENT} SET {', '.join(update_fields)} WHERE id = ?"
-                cursor.execute(query, values)
-                conn.commit()
-                return {"message": "Client mis à jour avec succès."}
-        except sqlite3.Error as e:
-            return {"error": str(e)}
-
-    def delete(self, client_id):
-        """
-        Supprime un client de la table `clients` en fonction de son ID.
-
-        :param client_id: ID du client à supprimer.
-        :return: Un message indiquant le succès ou une erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(f"DELETE FROM {TABLE_CLIENT} WHERE id = ?", (client_id,))
-                conn.commit()
-                return {"message": "Client supprimé avec succès."}
-        except sqlite3.Error as e:
-            return {"error": str(e)}
-Client().create_table()
+client = Client()
+client.create_table_client()
 
 
 class Commande:
-    """
-    Classe pour gérer les commandes dans une base de données SQLite.
-    Permet de créer la table, ajouter, lire et supprimer des commandes.
-    """
-
     def __init__(self, client_id=0, produit_id=0, quantite=0):
-        """
-        Initialise un objet Commande avec les attributs nécessaires.
-
-        :param client_id: ID du client (par défaut, 0).
-        :param produit_id: ID du produit (par défaut, 0).
-        :param quantite: Quantité commandée (par défaut, 0).
-        """
         self.client_id = client_id
         self.produit_id = produit_id
         self.quantite = quantite
 
-    def create_table(self):
-        """
-        Crée la table `commandes` dans la base de données si elle n'existe pas déjà.
-        La table contient les colonnes : id, client_id, produit_id et quantite.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:  # Connexion à la base de données
-                cursor = conn.cursor()  # Création d'un curseur pour exécuter des commandes SQL
-                cursor.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {TABLE_COMMANDE} (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,  -- Identifiant unique pour chaque commande
-                        client_id INTEGER NOT NULL,            -- ID du client (référence)
-                        produit_id INTEGER NOT NULL,           -- ID du produit (référence)
-                        quantite INTEGER NOT NULL,             -- Quantité commandée
-                        FOREIGN KEY (client_id) REFERENCES {TABLE_CLIENT}(id),  -- Relation avec la table clients
-                        FOREIGN KEY (produit_id) REFERENCES {TABLE_PRODUIT}(id) -- Relation avec la table produits
-                    );
-                """)
-                conn.commit()  # Validation des modifications
-        except sqlite3.Error as e:
-            print(f"Erreur lors de la création de la table : {e}")
+    # Create the database and table if they don't exist
+    def create_table_commande(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS commandes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    client_id INTEGER NOT NULL,
+                    produit_id INTEGER NOT NULL,
+                    quantite INTEGER NOT NULL,
+                    FOREIGN KEY (client_id) REFERENCES clients (id),
+                    FOREIGN KEY (produit_id) REFERENCES produits (id)
+                )
+            """)
+            connection.commit()
 
-    def add(self):
-        """
-        Ajoute une commande dans la table `commandes`.
+    # Add a new commande to the database
+    def add_commande(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                INSERT INTO commandes (client_id, produit_id, quantite)
+                VALUES (?, ?, ?)
+            """, (self.client_id, self.produit_id, self.quantite))
+            connection.commit()
 
-        :return: Un dictionnaire contenant les détails de la commande ajoutée ou un message d'erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(f"""
-                    INSERT INTO {TABLE_COMMANDE} (client_id, produit_id, quantite)
-                    VALUES (?, ?, ?)
-                """, (self.client_id, self.produit_id, self.quantite))
-                conn.commit()
-                commande_id = cursor.lastrowid  # Récupération de l'ID généré pour la commande
-                return {
-                    "id": commande_id,
-                    "client_id": self.client_id,
-                    "produit_id": self.produit_id,
-                    "quantite": self.quantite
-                }
-        except sqlite3.Error as e:
-            return {"error": str(e)}
+    # Retrieve all commandes from the database
+    def get_commandes(self):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT * FROM commandes")
+            commandes = cursor.fetchall()
+            return commandes
 
-    def read(self, commande_id=None):
-        """
-        Récupère une commande spécifique ou toutes les commandes.
+    # Update an existing commande in the database
+    def update_commande(self, commande_id):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                UPDATE commandes
+                SET client_id = ?, produit_id = ?, quantite = ?
+                WHERE id = ?
+            """, (self.client_id, self.produit_id, self.quantite, commande_id))
+            connection.commit()
 
-        :param commande_id: ID de la commande à lire. Si None, toutes les commandes sont retournées.
-        :return: Une liste des commandes ou un dictionnaire contenant un message d'erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                if commande_id:
-                    cursor.execute(f"SELECT * FROM {TABLE_COMMANDE} WHERE id = ?", (commande_id,))
-                    return cursor.fetchone()  # Récupère une seule commande
-                else:
-                    cursor.execute(f"SELECT * FROM {TABLE_COMMANDE}")
-                    return cursor.fetchall()  # Récupère toutes les commandes
-        except sqlite3.Error as e:
-            return {"error": str(e)}
+    # Delete a commande from the database
+    def delete_commande(self, commande_id):
+        with sqlite3.connect("app_database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("DELETE FROM commandes WHERE id = ?", (commande_id,))
+            connection.commit()
 
-    def update(self, commande_id, **kwargs):
-        """
-        Met à jour une commande en fonction des champs fournis.
-
-        :param commande_id: ID de la commande à mettre à jour.
-        :param kwargs: Dictionnaire contenant les champs à mettre à jour et leurs nouvelles valeurs.
-        :return: Un message indiquant le succès ou une erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                update_fields = []
-                values = []
-                for field, value in kwargs.items():
-                    if value is not None:
-                        update_fields.append(f"{field} = ?")
-                        values.append(value)
-                if not update_fields:
-                    return {"message": "Aucune modification à apporter."}
-                values.append(commande_id)  # Ajoute l'ID de la commande à la fin des valeurs
-                query = f"UPDATE {TABLE_COMMANDE} SET {', '.join(update_fields)} WHERE id = ?"
-                cursor.execute(query, values)
-                conn.commit()
-                return {"message": "Commande mise à jour avec succès."}
-        except sqlite3.Error as e:
-            return {"error": str(e)}
-
-    def delete(self, commande_id):
-        """
-        Supprime une commande de la table `commandes` en fonction de son ID.
-
-        :param commande_id: ID de la commande à supprimer.
-        :return: Un message indiquant le succès ou une erreur.
-        """
-        try:
-            with sqlite3.connect("app_database.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(f"DELETE FROM {TABLE_COMMANDE} WHERE id = ?", (commande_id,))
-                conn.commit()
-                return {"message": "Commande supprimée avec succès."}
-        except sqlite3.Error as e:
-            return {"error": str(e)}
-# Appel de la méthode create_table au démarrage de l'application
-Commande().create_table()
+commande = Commande()
+commande.create_table_commande()

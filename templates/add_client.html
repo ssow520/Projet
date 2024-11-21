@@ -3,21 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un client</title>
+    <title>Ajouter un Client</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #fff9e3;
+            text-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        label {
+            font-size: 1.1rem;
+            color: #fff9e3;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* Modification du style du bouton */
+        button, .btn-custom {
+            width: auto;
+            padding: 8px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            background-color: #e74c3c; /* Rouge */
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        /* Effet de survol et de clic */
+        button:hover, .btn-custom:hover {
+            background-color: #c0392b; /* Rouge foncé */
+            transform: scale(1.1); /* Effet d'agrandissement */
+        }
+
+        button:active, .btn-custom:active {
+            transform: scale(1.05); /* Effet au clic */
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #fff9e3;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            color: white;
+            background-color: #d9534f;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #5bc0de;
+        }
+    </style>
 </head>
 <body>
-    <h2>Ajouter un Client</h2>
+    <h1><i class="fas fa-user-plus"></i> Ajouter un Client</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert {{ category }}">
+                <ul>
+                    {% for category, message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <form method="POST">
-        <label for="nom">Nom</label>
-        <input type="text" id="nom" name="nom" required><br>
+        <label for="nom">Nom du client :</label>
+        {{ form.nom(class="form-control", size=32) }}
 
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required><br>
+        <label for="email">Email :</label>
+        {{ form.email(class="form-control", size=32) }}
 
-        <label for="adresse">Adresse</label>
-        <textarea id="adresse" name="adresse" required></textarea><br>
+        <label for="adresse">Adresse :</label>
+        {{ form.adresse(class="form-control", size=32) }}
 
-        <button type="submit">Ajouter</button>
+        <div>
+            <!-- Ajout d'une classe personnalisée pour appliquer le bouton modifié -->
+            {{ form.submit(class="btn-custom") }}
+        </div>
     </form>
+
+    <br><a href="{{ url_for('list_clients') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour à la liste des clients</a>
 </body>
 </html>

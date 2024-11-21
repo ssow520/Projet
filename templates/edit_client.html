@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter une Commande</title>
+    <title>Modifier un Client</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <style>
         body {
@@ -17,7 +17,7 @@
             min-height: 100vh;
         }
 
-        h2 {
+        h1 {
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 40px;
@@ -39,7 +39,7 @@
             color: #fff9e3;
         }
 
-        input, select, button {
+        input, button {
             width: 100%;
             padding: 12px;
             font-size: 1rem;
@@ -51,7 +51,7 @@
         }
 
         button {
-            background-color: #ff6a00;
+            background-color: #2575fc;
             color: white;
             border: none;
             cursor: pointer;
@@ -59,7 +59,7 @@
         }
 
         button:hover {
-            background-color: #ee0979;
+            background-color: #6a11cb;
             transform: translateY(-2px);
         }
 
@@ -75,60 +75,30 @@
         .back-link:hover {
             text-decoration: underline;
         }
-
-        .alert {
-            color: white;
-            background-color: #d9534f;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .alert-success {
-            background-color: #5bc0de;
-        }
     </style>
 </head>
 <body>
-    <h2><i class="fas fa-plus-circle"></i> Ajouter une Commande</h2>
+    <h1><i class="fas fa-user-edit"></i> Modifier le Client</h1>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert {{ category }}">
-                <ul>
-                    {% for category, message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    {% if clients and produits %}
     <form method="POST">
-        <label for="client">Client :</label>
-        <select name="client" id="client" required>
-            {% for client in clients %}
-                <option value="{{ client.id }}">{{ client.nom }}</option>
-            {% endfor %}
-        </select><br><br>
-
-        <label for="produit">Produit :</label>
-        <select name="produit" id="produit" required>
-            {% for produit in produits %}
-                <option value="{{ produit.id }}">{{ produit.nom }}</option>
-            {% endfor %}
-        </select><br><br>
-
-        <label for="quantite">Quantité :</label>
-        <input type="number" name="quantite" id="quantite" required><br><br>
-
-        <button type="submit"><i class="fas fa-shopping-cart"></i> Ajouter Commande</button>
+        {{ form.hidden_tag() }}
+        <div>
+            <label for="nom">Nom</label>
+            {{ form.nom() }}
+        </div>
+        <div>
+            <label for="email">Email</label>
+            {{ form.email() }}
+        </div>
+        <div>
+            <label for="adresse">Adresse</label>
+            {{ form.adresse() }}
+        </div>
+        <div>
+            <button type="submit"><i class="fas fa-save"></i> {{ form.submit.label }}</button>
+        </div>
     </form>
-    {% else %}
-    <p>Impossible d'ajouter une commande : il n'y a pas de clients ou de produits disponibles.</p>
-    {% endif %}
 
-    <br><a href="{{ url_for('liste_commandes') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour à la liste des commandes</a>
+    <a href="{{ url_for('list_clients') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour à la liste des clients</a>
 </body>
 </html>

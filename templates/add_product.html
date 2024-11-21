@@ -3,27 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un produit</title>
+    <title>Ajouter un Produit</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg,  #6a11cb, #2575fc);
+            color: white;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #fff9e3;
+            text-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        label {
+            font-size: 1.1rem;
+            color: #fff9e3;
+        }
+
+        input, select, textarea, button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #ff6a00;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #ee0979;
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #fff9e3;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            color: white;
+            background-color: #d9534f;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #5bc0de;
+        }
+    </style>
 </head>
 <body>
-    <h2>Ajouter un Produit</h2>
-    <form method="POST">
-        <label for="nom">Nom</label>
-        <input type="text" id="nom" name="nom" required><br>
+    <h1><i class="fas fa-plus-circle"></i> Ajouter un Produit</h1>
 
-        <label for="prix">Prix</label>
-        <input type="number" id="prix" name="prix" step="0.01" required><br>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert {{ category }}">
+                <ul>
+                    {% for category, message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
 
-        <label for="description">Description</label>
-        <textarea id="description" name="description" required></textarea><br>
+    <form method="POST" action="{{ url_for('add_produit') }}">
+        {{ form.hidden_tag() }}
 
-        <label for="stock">Stock</label>
-        <input type="number" id="stock" name="stock" required><br>
+        <div>
+            <label for="nom">{{ form.nom.label }}</label>
+            {{ form.nom(class="form-control", size=32) }}
+        </div>
 
-        <label for="type">Type</label>
-        <input type="text" id="type" name="type" required><br>
+        <div>
+            <label for="prix">{{ form.prix.label }}</label>
+            {{ form.prix(class="form-control", size=32) }}
+        </div>
 
-        <button type="submit">Ajouter</button>
+        <div>
+            <label for="description">{{ form.description.label }}</label>
+            {{ form.description(class="form-control", rows=4, cols=50) }}
+        </div>
+
+        <div>
+            <label for="stock">{{ form.stock.label }}</label>
+            {{ form.stock(class="form-control", size=32) }}
+        </div>
+
+        <div>
+            <label for="type_produit">{{ form.type_produit.label }}</label>
+            {{ form.type_produit(class="form-control") }}
+        </div>
+
+        <div>
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
     </form>
+
+    <a href="{{ url_for('produits') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour à la liste des produits</a>
 </body>
 </html>

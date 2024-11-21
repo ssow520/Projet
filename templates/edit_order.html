@@ -3,29 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modifier la commande</title>
+    <title>Modifier la Commande</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #fff9e3;
+            text-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        label {
+            font-size: 1.1rem;
+            color: #fff9e3;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #333;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+        }
+
+        button {
+            background-color: #2575fc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #6a11cb;
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #fff9e3;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            color: white;
+            background-color: #ff6347;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .alert-success {
+            background-color: #28a745;
+        }
+
+        .alert-info {
+            background-color: #17a2b8;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+    </style>
 </head>
 <body>
-    <h2>Modifier la Commande</h2>
+    <h2><i class="fas fa-edit"></i> Modifier la Commande</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="alert {% if category == 'error' %}alert-danger{% elif category == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                        <i class="fas {% if category == 'error' %}fa-exclamation-triangle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %}"></i> 
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
     <form method="POST">
-        <label for="client_id">Client</label>
-        <select name="client_id" id="client_id" required>
-            {% for client in clients %}
-                <option value="{{ client.id }}" {% if client.id == order.client.id %}selected{% endif %}>{{ client.nom }}</option>
-            {% endfor %}
-        </select><br>
+        <div>
+            <label for="client">Client :</label>
+            <select name="client" id="client" required>
+                {% for client in clients %}
+                    <option value="{{ client.id }}" {% if client.id == order.client.id %}selected{% endif %}>{{ client.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="produit">Produit :</label>
+            <select name="produit" id="produit" required>
+                {% for produit in produits %}
+                    <option value="{{ produit.id }}" {% if produit.id == order.produit.id %}selected{% endif %}>{{ produit.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="quantite">Quantité :</label>
+            <input type="number" name="quantite" id="quantite" value="{{ order.quantite }}" required>
+        </div>
 
-        <label for="produit_id">Produit</label>
-        <select name="produit_id" id="produit_id" required>
-            {% for product in products %}
-                <option value="{{ product.id }}" {% if product.id == order.produit.id %}selected{% endif %}>{{ product.nom }}</option>
-            {% endfor %}
-        </select><br>
-
-        <label for="quantite">Quantité</label>
-        <input type="number" name="quantite" id="quantite" value="{{ order.quantite }}" required><br>
-
-        <button type="submit">Mettre à jour</button>
+        <button type="submit"><i class="fas fa-save"></i> Mettre à jour la Commande</button>
     </form>
+
+    <a href="{{ url_for('liste_commandes') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour à la liste des commandes</a>
 </body>
 </html>
