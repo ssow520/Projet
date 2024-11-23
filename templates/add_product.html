@@ -22,7 +22,7 @@
         {% endif %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('add_produit') }}">
+    <form method="POST" action="{{ url_for('add_product') }}">
         {{ form.hidden_tag() }}
 
         <div>
@@ -55,6 +55,6 @@
         </div>
     </form>
 
-    <a href="{{ url_for('produits') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour à la liste des produits</a>
+    <a href="{{ url_for('list_produits') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour à la liste des produits</a>
 </body>
 </html>

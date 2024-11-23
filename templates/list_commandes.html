@@ -33,6 +33,13 @@
         {% endwith %}
 
         <!-- Ajouter une commande -->
+        {% for client in clients %}
+        {{ client.nom }}
+        {% endfor %}
+        {% for produit in produits %}
+        {{ produit.nom }}
+        {% endfor %}
+
         {% if clients and produits %}
             <div class="action-link">
                 <a href="{{ url_for('add_order') }}" class="btn-primary">

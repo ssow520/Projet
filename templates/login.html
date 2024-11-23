@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,5 +14,26 @@
         {{ form.submit(class_="btn-submit") }}
     </form>
     <p>Pas encore de compte ? <a href="{{ url_for('register') }}">Inscrivez-vous ici</a>.</p>
+</body>
+</html>-->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion</title>
+</head>
+<body>
+    <h1>Connexion</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        {{ form.username.label }} {{ form.username() }}
+        {{ form.password.label }} {{ form.password() }}
+        {{ form.submit() }}
+    </form>
+    {% if error %}
+        <p style="color: red">{{ error }}</p>
+    {% endif %}
+    <p>Pas encore de compte ? <a href="{{ url_for('register') }}">Créer un compte</a>.</p>
 </body>
 </html>
