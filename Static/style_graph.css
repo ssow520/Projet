@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    background: linear-gradient(135deg, #65408d, #bcdce2);
     color: white;
     padding: 20px;
     margin: 0;
@@ -76,6 +76,9 @@ h1 {
 }
 
 footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
     text-align: center;
     margin-top: auto;
     padding: 10px;

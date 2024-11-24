@@ -23,6 +23,16 @@
             <h1><i class="fas fa-tachometer-alt"></i> Bienvenue sur le Tableau de Bord</h1>
             <p>Utilisez le menu de navigation pour explorer les fonctionnalités de l'application.</p>
         </div>
+        <h1>Produits</h1>
+        <div class="products">
+            {% for product in products %}
+                <div class="product">
+                    <img src="{{ url_for('static', filename='images/' + product.image_url) }}" alt="{{ product.name }}">
+                    <h3>{{ product.name }}</h3>
+                    <p>{{ product.description }}</p>  <!-- Description visible directement -->
+                </div>
+            {% endfor %}
+        </div>        
     </main>
 
     <footer>
@@ -30,3 +40,4 @@
     </footer>
 </body>
 </html>
+

@@ -2,14 +2,14 @@ body {
     font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #6a11cb, #2575fc); /* Dégradé violet et bleu */
+    background: linear-gradient(135deg, #65408d, #bcdce2); 
     color: #ffffff;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
 
-/* En-tête */
+/* En-tête*/
 header {
     background: rgba(0, 0, 0, 0.3);
     text-align: center;
@@ -62,6 +62,9 @@ main a:hover {
 
 /* Pied de page */
 footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
     text-align: center;
     padding: 10px 0;
     background: rgba(0, 0, 0, 0.3);

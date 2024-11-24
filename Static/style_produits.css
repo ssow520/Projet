@@ -3,7 +3,7 @@
         font-family: 'Arial', sans-serif;
         margin: 0;
         padding: 0;
-        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        background: linear-gradient(135deg, #65408d, #bcdce2);
         color: #ffffff;
         display: flex;
         flex-direction: column;
@@ -131,8 +131,39 @@
         opacity: 0.8;
     }
 
+    .filter-container {
+        margin: 20px auto;
+        text-align: center;
+    }
+    
+    .filter-container label {
+        font-size: 1.2rem;
+        margin-right: 10px;
+        color: #fff9e3;
+    }
+    
+    .filter-container select {
+        padding: 10px;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #080202;
+        border: none;
+        box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    .filter-container select:focus {
+        outline: none;
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+
     /* Footer */
     footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
         text-align: center;
         padding: 10px 0;
         background: rgba(0, 0, 0, 0.4);

@@ -23,12 +23,26 @@
                 <i class="fas fa-plus-circle"></i> Ajouter un Produit
             </a>
         </div>
+
+        <div class="filter-container">
+            <form method="GET" action="{{ url_for('list_produits') }}">
+                <label for="type_produit">Filtrer par type :</label>
+                <select name="type_produit" id="type_produit" onchange="this.form.submit()">
+                    <option value="">Tous les types</option>
+                    {% for type in types_produits %}
+                        <option value="{{ type }}" {% if selected_type == type %}selected{% endif %}>
+                            {{ type }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>        
         
         <table>
             <thead>
                 <tr>
                     <th>Nom</th>
-                    <th>Prix (€)</th>
+                    <th>Prix ($CAD)</th>
                     <th>Type</th>
                     <th>Description</th>
                     <th>Stock</th>
@@ -39,7 +53,7 @@
                 {% for produit in produits %}
                 <tr>
                     <td>{{ produit.nom }}</td>
-                    <td>{{ produit.prix }}€</td>
+                    <td>{{ produit.prix }} $CAD</td>
                     <td>{{ produit.type_produit }}</td>
                     <td>{{ produit.description }}</td>
                     <td>{{ produit.stock }}</td>
