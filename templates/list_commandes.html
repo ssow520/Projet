@@ -33,13 +33,6 @@
         {% endwith %}
 
         <!-- Ajouter une commande -->
-        {% for client in clients %}
-        {{ client.nom }}
-        {% endfor %}
-        {% for produit in produits %}
-        {{ produit.nom }}
-        {% endfor %}
-
         {% if clients and produits %}
             <div class="action-link">
                 <a href="{{ url_for('add_order') }}" class="btn-primary">
@@ -66,20 +59,20 @@
                 {% if orders %}
                     {% for order in orders %}
                         <tr>
-                            <td>{{ order.client.nom }}</td>
-                            <td>{{ order.produit.nom }}</td>
-                            <td>{{ order.quantite }}</td>
+                            <td>{{ order[1] }}</td>  <!-- Client name -->
+                            <td>{{ order[2] }}</td>  <!-- Product name -->
+                            <td>{{ order[3] }}</td>  <!-- Quantity -->
                             <td class="action-buttons">
                                 <!-- Modifier -->
-                                <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn-action btn-primary">
+                                <a href="{{ url_for('edit_order', order_id=order[0]) }}" class="btn-action btn-primary">
                                     <i class="fas fa-edit"></i> Modifier
                                 </a>
-                                <!-- Supprimer -->
-                                <form method="POST" action="{{ url_for('delete_order', order_id=order.id) }}" style="display:inline;">
-                                    <button type="submit" class="btn-action btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette commande ?');">
-                                        <i class="fas fa-trash-alt"></i> Supprimer
-                                    </button>
-                                </form>
+                            <!-- Supprimer -->
+                            <form method="POST" action="{{ url_for('delete_order', order_id=order[0]) }}" style="display:inline;">
+                                <button type="submit" class="btn-action btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette commande ?');">
+                                    <i class="fas fa-trash-alt"></i> Supprimer
+                                </button>
+                            </form>
                             </td>
                         </tr>
                     {% endfor %}

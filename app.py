@@ -271,14 +271,17 @@ def list_clients():
 
 @app.route('/commandes')
 def list_commandes():
-    # Récupérer les clients et les produits depuis la base de données
-    clients = Client()
+    commande = Commande(client_id=None, produit_id=None, quantite=None)
+    orders = commande.get_commandes_with_details()
+    clients = Client("", "", "")
     clients = clients.get_clients()
-    
-    # Récupérer les produits
     produits = Produit()
     produits = produits.get_products()
-    return render_template('list_commandes.html', clients=clients, produits=produits)
+    
+    return render_template('list_commandes.html', 
+                         orders=orders,
+                         clients=clients, 
+                         produits=produits)
 
 
 @app.route('/add_order', methods=['GET', 'POST'])
@@ -320,40 +323,70 @@ def add_order():
 
 @app.route('/edit_order/<int:order_id>', methods=['GET', 'POST'])
 def edit_order(order_id):
-    order = Commande.query.get_or_404(order_id)
-    form = AddOrderForm(obj=order)
-    form.client_id.choices = [(c[0], c[1]) for c in Client.get_clients()]
-    form.produit_id.choices = [(p[0], p[1]) for p in Produit.get_products()]
-
+    form = AddOrderForm()
+    
+    clients = Client("", "", "")
+    clients_list = clients.get_clients()
+    form.client_id.choices = [(c[0], c[1]) for c in clients_list]
+    
+    produits = Produit()
+    produits_list = produits.get_products()
+    form.produit_id.choices = [(p.id, p.nom) for p in produits_list]
+    
+    commande = Commande()
+    current_order = commande.get_order_by_id(order_id)
+    
+    if request.method == 'GET':
+        # Pre-fill the form with current values
+        form.client_id.data = current_order[1]  
+        form.produit_id.data = current_order[2] 
+        form.quantite.data = current_order[3] 
+    
     if form.validate_on_submit():
-        order.client_id = form.client_id.data
-        order.produit_id = form.produit_id.data
-        order.quantite = form.quantite.data
-
-        # Mettre à jour le produit et ajuster le stock
-        produit = Produit.query.get(order.produit_id)
-        produit.stock -= form.quantite.data  # Réduire le stock selon la nouvelle quantité
-        
-        db.session.commit()
-        flash('Commande mise à jour avec succès.', 'success')
-        return redirect(url_for('list_commandes'))
-
-    return render_template('edit_order.html', form=form, order=order)
+        try:
+            updated_order = Commande(
+                client_id=form.client_id.data,
+                produit_id=form.produit_id.data,
+                quantite=form.quantite.data
+            )
+            updated_order.update_commande(order_id)
+            flash('Commande mise à jour avec succès.', 'success')
+            return redirect(url_for('list_commandes'))
+        except ValueError as e:
+            flash(str(e), 'error')
+    
+    return render_template('edit_order.html', form=form, order_id=order_id)
 
 @app.route('/delete_order/<int:order_id>', methods=['POST'])
 def delete_order(order_id):
-    order = Commande.query.get_or_404(order_id)
-    produit = Produit.query.get(order.produit_id)
+    try:
+        commande = Commande()
+        order = commande.get_order_by_id(order_id)
+        if not order:
+            flash('Commande non trouvée.', 'error')
+            return redirect(url_for('list_commandes'))
 
-    # Réajuster le stock du produit après la suppression de la commande
-    produit.stock += order.quantite
+        produit = Produit()
+        product = next((p for p in produit.get_products() if p.id == order[2]), None)  
+        if product:
+            product.stock += order[3]  
+            produit.update_product(
+                produit_id=product.id,
+                nom=product.nom,
+                prix=product.prix,
+                description=product.description,
+                stock=product.stock,
+                type_produit=product.type_produit
+            )
 
-    # Supprimer la commande de la base de données
-    db.session.delete(order)
-    db.session.commit()
+        commande.delete_commande(order_id)
 
-    flash('Commande supprimée avec succès.', 'success')
+        flash('Commande supprimée avec succès.', 'success')
+    except Exception as e:
+        flash(f"Erreur lors de la suppression de la commande : {str(e)}", 'error')
+
     return redirect(url_for('list_commandes'))
+ 
 
 
 #-----------------------Methodes et Routes pour les Graphiques -----------------------
