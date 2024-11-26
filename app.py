@@ -5,6 +5,8 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
 from decimal import Decimal
+import logging
+from functools import wraps
 import matplotlib
 matplotlib.use('Agg')
 from gestion_produit import Produit, Client, Commande
@@ -13,41 +15,63 @@ import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'mysecretkey'
+app.config['SECRET_KEY'] = 'mysecretkey' # Clef de cryptage
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db' # Chemin vers ta base de données SQLite des utilisateurs
-db = SQLAlchemy(app)
+db = SQLAlchemy(app) # Création de l'instance de SQLAlchemy
+
+#--------------création des decorateurs-----------------
+
+logging.basicConfig(filename='user_actions.log', level=logging.INFO) # Configuration du logging
+def log_action(func): # Création du decorateur
+    @wraps(func) # Utilisation du decorateur
+    def wrapper(*args, **kwargs): 
+        user_id = request.cookies.get('user_id') 
+        action = func.__name__ 
+        logging.info(f"User ID: {user_id}, Action: {action}") 
+        return func(*args, **kwargs) 
+    return wrapper 
+
 
 #------------------------Classe, Methodes et Routes pour accéder au site------------------------
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+# Création de la classe User
+class User(db.Model): # Création de la classe User
+    id = db.Column(db.Integer, primary_key=True) 
+    username = db.Column(db.String(80), unique=True, nullable=False) 
+    password = db.Column(db.String(120), nullable=False) 
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<User %r>' % self.username 
+    
 
+# Création de la classe RegisterForm
 class RegisterForm(FlaskForm):
-    username = StringField('Nom d\'utilisateur', validators=[DataRequired()])
-    password = PasswordField('Mot de passe', validators=[DataRequired()])
-    submit = SubmitField('S\'inscrire')
+    username = StringField('Nom d\'utilisateur', validators=[DataRequired()])  # Champ de saisie pour le nom d'utilisateur
+    password = PasswordField('Mot de passe', validators=[DataRequired()])   # Champ de saisie pour le mot de passe
+    submit = SubmitField('S\'inscrire') # Bouton de soumission
 
-class LoginForm(FlaskForm):
-    username = StringField('Nom d\'utilisateur', validators=[DataRequired()])
-    password = PasswordField('Mot de passe', validators=[DataRequired()])
-    submit = SubmitField('Connexion')
 
+# Création de la classe LoginForm
+class LoginForm(FlaskForm): # Création de la classe LoginForm
+    username = StringField('Nom d\'utilisateur', validators=[DataRequired()]) # Champ de saisie pour le nom d'utilisateur
+    password = PasswordField('Mot de passe', validators=[DataRequired()]) # Champ de saisie pour le mot de passe
+    submit = SubmitField('Connexion') # Bouton de soumission
+
+
+# Création de la fonction create_user
 def create_user(username, password):
-    user = User(username=username, password=password)
+    user = User(username=username, password=password) # Création d'un nouvel utilisateur
     db.session.add(user)
-    db.session.commit()
+    db.session.commit() # Sauvegarde des modifications
 
-def check_login(username, password):
+# Création de la fonction check_login
+def check_login(username, password):# Création de la fonction check_login
     user = User.query.filter_by(username=username).first()
     if user and user.password == password:
         return True
     return False
 
+# Création de la route '/' index
 @app.route('/')
 def index():
     user = session.get('user')
@@ -56,7 +80,8 @@ def index():
     else:
         return render_template('index.html', user=None)
 
-@app.route('/register', methods=['GET', 'POST'])
+# Création de la route '/register'
+@app.route('/register', methods=['GET', 'POST']) # Création de la route '/register'
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -66,6 +91,7 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
+# Création de la route '/login'
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -159,7 +185,7 @@ def edit_product(id):
 def delete_product(id):
     produit = Produit()  # Créer une instance de la classe Produit
     produit.delete_product(id)  # Appeler la méthode pour supprimer le produit de la base de données
-    flash('Produit supprimé avec succès!', 'danger')
+    #flash('Produit supprimé avec succès!', 'danger')
     return redirect(url_for('list_produits'))
 
 
@@ -250,7 +276,7 @@ def delete_client(client_id):
         # Créez une instance de la classe Client avec l'ID du client à supprimer
         client = Client(nom=None, email=None, adresse=None)  # Utilisez des valeurs par défaut pour les autres attributs
         client.delete_client(client_id)  # Appelez la méthode d'instance delete_client
-        flash("Client supprimé avec succès.", "success")
+        #flash("Client supprimé avec succès.", "success")
     except Exception as e:
         flash(f"Erreur lors de la suppression du client : {str(e)}", "danger")
     
@@ -320,7 +346,7 @@ def add_order():
 
     return render_template('add_order.html', form=form)
 
-
+# Création de la route '/edit_order/<int:order_id>'
 @app.route('/edit_order/<int:order_id>', methods=['GET', 'POST'])
 def edit_order(order_id):
     form = AddOrderForm()
@@ -357,6 +383,7 @@ def edit_order(order_id):
     
     return render_template('edit_order.html', form=form, order_id=order_id)
 
+# Création de la route '/delete_order/<int:order_id>'
 @app.route('/delete_order/<int:order_id>', methods=['POST'])
 def delete_order(order_id):
     try:
@@ -391,38 +418,30 @@ def delete_order(order_id):
 
 #-----------------------Methodes et Routes pour les Graphiques -----------------------
 
+# Création de la fonction pour générer le graphique circulaire
 def generate_pie_chart(app):
-    # Connexion à la base de données
     with app.open_resource('app_database.db') as db_file:
         conn = sqlite3.connect(db_file.name)
         cursor = conn.cursor()
-
-        # Requête pour récupérer les données des types de produits
         cursor.execute('SELECT type_produit, COUNT(*) FROM produits GROUP BY type_produit')
         rows = cursor.fetchall()
-
-        # Extraire les types de produits et leurs comptes
         types = [row[0] for row in rows]
         counts = [row[1] for row in rows]
-
-        # Créer le graphique circulaire
-        plt.figure(figsize=(8, 6))  # Taille du graphique
+        plt.figure(figsize=(8, 6)) 
         plt.pie(counts, labels=types, autopct='%1.1f%%', startangle=90)
-        plt.axis('equal')  # Assurer que le graphique est un cercle
+        plt.axis('equal')
         plt.title('Répartition des Produits par Type')
-
-        # Sauvegarder le graphique dans un fichier
         plt.savefig('static/product_share.png', transparent=True)
         plt.close()
 
+# Création de la fonction pour générer le graphique en barres
 def generate_category_bar_chart(app):
-    # Connexion à la base de données
     with app.open_resource('app_database.db') as db_file:
         conn = sqlite3.connect(db_file.name)
         cursor = conn.cursor()
 
         # Requête pour récupérer les données des catégories
-        cursor.execute('SELECT stock, COUNT(*) FROM produits GROUP BY stock ORDER BY COUNT(*) DESC LIMIT 5')
+        cursor.execute('SELECT stock, COUNT(*) FROM produits GROUP BY stock ORDER BY COUNT(*) DESC LIMIT 3')
         rows = cursor.fetchall()
 
         # Extraire les noms de catégories et les comptes
@@ -439,6 +458,7 @@ def generate_category_bar_chart(app):
         plt.savefig('static/category_bar_chart.png', transparent=True)
         plt.close()
 
+# Création de la fonction pour générer l'histogramme
 def generate_price_histogram(app):
     # Connexion à la base de données
     with app.open_resource('app_database.db') as db_file:
@@ -462,6 +482,7 @@ def generate_price_histogram(app):
         plt.savefig('static/price_histogram.png', transparent=True)
         plt.close()
 
+# Création de la route pour afficher les graphiques
 @app.route('/graph')
 def graph():
     # Générer les graphiques à chaque chargement de la page
