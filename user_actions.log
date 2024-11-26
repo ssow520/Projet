@@ -1002,3 +1002,6 @@ INFO:werkzeug: * Restarting with stat
 WARNING:werkzeug: * Debugger is active!
 INFO:werkzeug: * Debugger PIN: 121-863-125
 INFO:werkzeug: * Detected change in 'c:\\Projet\\Langage_Script\\ProjetC\\app.py', reloading
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 121-863-125
